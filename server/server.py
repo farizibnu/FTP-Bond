@@ -44,6 +44,34 @@ def handle_client(client_socket, client_address):
     
     client_socket.close()
 
+# Fungsi untuk mencatat aktivitas client
+def track_activity():
+    global client_activity
+    while True:
+        if not upload_queue.empty():
+            client_id = upload_queue.get()
+            if client_id in client_activity:
+                client_activity[client_id]['upload'] += 1
+            else:
+                client_activity[client_id] = {'upload': 1, 'download': 0}
+        
+        if not download_queue.empty():
+            client_id = download_queue.get()
+            if client_id in client_activity:
+                client_activity[client_id]['download'] += 1
+            else:
+                client_activity[client_id] = {'upload': 0, 'download': 1}
+
+# Fungsi untuk menampilkan aktivitas client
+def print_client_activity():
+    global client_activity
+    while True:
+        command = input("Enter 'status' to see client activity: ")
+        if command == 'status':
+            print("Client Activity:")
+            for client_id, activity in client_activity.items():
+                print(f"Client {client_id} - Uploads: {activity['upload']}, Downloads: {activity['download']}")
+
 # Fungsi utama untuk menjalankan server
 def server_main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
