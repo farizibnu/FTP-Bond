@@ -12,6 +12,10 @@ client_activity = {}
 def handle_client(client_socket, client_address):
     global client_activity
     client_id = client_address[0] + ':' + str(client_address[1])
+    thread_id = threading.get_ident()
+    print(f"Thread ID {thread_id} handling client {client_id}")
+    client_activity[client_id] = {'thread_id': thread_id, 'upload': 0, 'download': 0}
+    
     while True:
         # Terima perintah dari client
         command = client_socket.recv(1024).decode()
@@ -52,15 +56,11 @@ def track_activity():
             client_id = upload_queue.get()
             if client_id in client_activity:
                 client_activity[client_id]['upload'] += 1
-            else:
-                client_activity[client_id] = {'upload': 1, 'download': 0}
         
         if not download_queue.empty():
             client_id = download_queue.get()
             if client_id in client_activity:
                 client_activity[client_id]['download'] += 1
-            else:
-                client_activity[client_id] = {'upload': 0, 'download': 1}
 
 # Fungsi untuk menampilkan aktivitas client
 def print_client_activity():
@@ -70,7 +70,7 @@ def print_client_activity():
         if command == 'status':
             print("Client Activity:")
             for client_id, activity in client_activity.items():
-                print(f"Client {client_id} - Uploads: {activity['upload']}, Downloads: {activity['download']}")
+                print(f"Client {client_id} - Thread ID: {activity['thread_id']}, Uploads: {activity['upload']}, Downloads: {activity['download']}")
 
 # Fungsi utama untuk menjalankan server
 def server_main():
