@@ -9,20 +9,21 @@ download_queue = Queue()
 client_activity = {}
 
 # Fungsi untuk menangani setiap client
+# Parameter : 1.)Client socket 2.)Client Address
 def handle_client(client_socket, client_address):
     global client_activity
     client_id = client_address[0] + ':' + str(client_address[1])
-    thread_id = threading.get_ident()
+    thread_id = threading.get_ident() # get thread id
     print(f"Thread ID {thread_id} handling client {client_id}")
     client_activity[client_id] = {'thread_id': thread_id, 'upload': 0, 'download': 0}
     
     while True:
         # Terima perintah dari client
-        command = client_socket.recv(1024).decode()
-        if not command:
+        command = client_socket.recv(1024).decode() # Get command from client
+        if not command: # Handle error if command was null
             break
         
-        if command.startswith('UPLOAD'):
+        if command.startswith('UPLOAD'): # Jika command yang dikirim client itu "UPLOAD" maka simpan file di server
             filename = command.split()[1]
             filesize = int(command.split()[2])
             with open(filename, 'wb') as f:
@@ -31,7 +32,7 @@ def handle_client(client_socket, client_address):
             upload_queue.put(client_id)
             client_socket.send(f"File {filename} uploaded successfully.".encode())
         
-        elif command.startswith('DOWNLOAD'):
+        elif command.startswith('DOWNLOAD'): # Jika command yang dikirim client itu "DOWNLOAD" maka kirim file ke client
             filename = command.split()[1]
             if os.path.exists(filename):
                 filesize = os.path.getsize(filename)
@@ -41,12 +42,12 @@ def handle_client(client_socket, client_address):
                     client_socket.sendall(data)
                 download_queue.put(client_id)
             else:
-                client_socket.send(f"File {filename} not found.".encode())
+                client_socket.send(f"File {filename} not found.".encode()) # Handle error jika file yang hendak di download tidak ada
         
         elif command == 'EXIT':
             break
     
-    client_socket.close()
+    client_socket.close() # close socket
 
 # Fungsi untuk mencatat aktivitas client
 def track_activity():
